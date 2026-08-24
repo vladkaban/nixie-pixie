@@ -3,35 +3,32 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ./network-power.nix
   ];
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
   boot.kernelParams = [
-    "reboot=acpi"
     "pcie_pme=nomsi"
-    "acpi=force"
     "acpi_backlight=native"
     "snd_hda_intel.dmic_detect=0"
+    "amd_pstate=active"
+    "radeon.tearfree=1"
+    "amdgpu.tearfree=1"
+    "reboot=pci"
+    "acpi_osi=Linux"
   ];
+
 
   networking.hostName = "vlad";
   networking.networkmanager.enable = true;
-
-  hardware.bluetooth = {
-    enable = true;
-    powerOnBoot = true;
-    settings = {
-      General = {
-        ControllerMode = "bredr";
-        FastConnectable = true;
-      };
-    };
-  };
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   services.blueman.enable = true;
   services.displayManager.lemurs.enable = true;
+  services.displayManager.sessionPackages = [ pkgs.niri ];
+  services.flatpak.enable = true;
   services.pipewire = {
     enable = true;
     alsa.enable = true;
@@ -56,7 +53,7 @@
   
   boot.initrd.kernelModules = [ "amdgpu" ];
   services.xserver.videoDrivers = [ "amdgpu" ];
-  
+  systemd.targets.poweroff.enable = true;  
   services.tlp = {
     enable = true;
     settings = {
@@ -102,6 +99,8 @@
   };
 
   environment.systemPackages = with pkgs; [
+	android-tools
+	scrcpy
     tmux
     git
     foot
@@ -120,10 +119,16 @@
     linux-firmware
     networkmanagerapplet
     blueman
+    helix
+    flatpak
     wireplumber
     coreutils
     gnused
     gsettings-desktop-schemas    
+	amneziawg-tools
+	mangohud
+	protonup-qt
+	xwayland-satellite
   ];
 
   services.xserver.xkb = {
@@ -138,13 +143,18 @@
   };
 
   system.stateVersion = "26.05";
+  programs.helium.enable = true;
+  programs.helium.flags = [ "--ozone-platform=wayland" ];
   programs.xwayland.enable = true;
+  programs.gamescope.enable = true;
+  programs.gamemode.enable = true;
   programs.steam = {
     enable = true;
-    remotePlay.openFirewall = true; 
-    dedicatedServer.openFirewall = true;   
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
     localNetworkGameTransfers.openFirewall = true;
   };
+  
   programs.niri.enable = true;
   programs.fish = {
     enable = true;
